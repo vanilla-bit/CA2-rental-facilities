@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add User</title>
+</head>
+<body>
+  <h1>Add New User</h1>
+  <form action="/users/add" method="POST">
+    <label>Name:</label><br>
+    <input type="text" name="name" required><br>
+    <label>Email:</label><br>
+    <input type="email" name="email" required><br>
+    <label>Phone:</label><br>
+    <input type="text" name="phone"><br><br>
+    <button type="submit">Add</button>
+  </form>
+  <% if (messages.success) { %>
+  <p><%= messages.success %></p>
+<% } %>
+
+</body>
+</html>
