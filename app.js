@@ -12,7 +12,7 @@ const db = mysql.createConnection({
     port:'61002',
     user: 'ca2rentalfacilities_shelflabor',
     password: '7f53d2a246632dddd36f9f81c6f77f4a4da72f9f',
-    //database: 'ca2rentalfacilities' //
+    database: 'ca2rentalfacilities_shelflabor' 
 });
 
 db.connect((err) => {
@@ -51,12 +51,12 @@ app.get('/', async (req, res) => {
 });
 
 // Add user form
-app.get('/add', (req, res) => {
+app.get('/addUser', (req, res) => {
   res.render('addUser');
 });
 
 // Handle new user submission
-app.post('/add', (req, res) => {
+app.post('/addUser', (req, res) => {
   const { name, email, phone } = req.body;
   try {
     db.query('INSERT INTO Users (name, email, phone) VALUES (?, ?, ?)', [name, email, phone]);
