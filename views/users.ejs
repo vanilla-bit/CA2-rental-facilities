@@ -5,11 +5,12 @@
 </head>
 <body>
   <h1>Users</h1>
-  <a href="/users/add">Add User</a>
+  <a href="/addUser">Add User</a>
   <ul>
     <% users.forEach(user => { %>
-      <li><%= user.name %> - <%= user.email %> - <%= user.phone %></li>
-    <% }) %>
+  <li><%= user.name %> - <%= user.email %> - <%= user.phone %></li>
+  <% }) %>
+
   </ul>
 </body>
 </html>
