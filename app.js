@@ -242,6 +242,115 @@ app.get('/deleteFacility/:id', (req, res) => {
 });
 //End of facility routes
 
+app.get('/rate/:id', (req, res) => {
+    //extract the product id from the request parameters
+    const rateId = req.params.id;
+    const sql = 'SELECT *FROM rate WHERE rateId = ?';
+    //Fetch data from MYsql based on product id
+    db.query( sql, [rateId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error.message);
+            return res.status(500).send('Error Retrieving rates by ID');
+        }
+        //Check if any product with the given id was found
+        if (results.length > 0) {
+            //Render html page with the product data
+            res.render('rates', {rate: results[0]});
+        } else {
+            //if no product with the given id is found, render a 404 page 
+            res.status(404).send('Rate not found');
+        }
+    });
+});
+
+app.get('/addRate', (req, res) => {
+    res.render('addRate');
+});
+
+app.get('/deleteRate/:id', (req, res) => {
+    const rateId = req.params.id;
+    const sql = 'DELETE FROM rate WHERE rateId = ?';
+    //Fetch data from MYsql based on product id
+    db.query( sql, [rateId], (error, results) => {
+        if (error) {
+            console.error('Error deleting rate:', error.message);
+            return res.status(500).send('Error deleting rate');
+        } else {
+            //if no product with the given id is found, render a 404 page 
+            res.redirect('/');
+        }
+    });
+});
+
+app.get('/editRate/:id', (req, res) => {
+    const rateId = req.params.id;
+    const sql = 'SELECT *FROM rate WHERE rateId = ?';
+    //Fetch data from MYsql based on product id
+    db.query( sql, [rateId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error.message);
+            return res.status(500).send('Error Retrieving rates by ID');
+        }
+        //Check if any product with the given id was found
+        if (results.length > 0) {
+            //Render html page with the product data
+            res.render('editRate', {rate: results[0]});
+        } else {
+            //if no product with the given id is found, render a 404 page 
+            res.status(404).send('Rate not found');
+        }
+    });
+});
+
+app.post('/addRate', upload.single('image'), (req, res) => {
+    //extract the rate data from the request body
+    const {facility, availability, price} = req.body;
+    let image;
+    if (req.file) {
+        image = req.file.filename;
+    } else {
+        image = "noimage.png";
+    }
+
+    let availabilityValue = availability === 'on' ? 1 : 0;
+    const sql = 'INSERT INTO rate (facility, availability, price_per_hour, image) VALUES (?, ?, ?, ?)';
+    //insert the new rate into the database
+    db.query( sql, [facility, availabilityValue, price, image], (error, results) => {
+        if (error) {
+            console.error('Error adding rate:', error.message);
+            res.status(500).send('Error adding rates');
+        } else {
+            //if no rate with the given id is found, render a 404 page 
+            res.redirect('/');
+        }
+    });
+});
+
+app.post('/editRate/:id', upload.single('image'), (req, res) => {
+    //extract the product data from the request body
+    const rateId = req.params.id;
+    const {facility, availability, price} = req.body;
+    let image = req.body.currentImage; //retrieve current image filename
+    if (req.file) { // if new image is uploaded 
+        image = req.file.filename; //set image to be new image filename
+    }
+
+    let availabilityValue = availability === 'on' ? 1 : 0;
+    const sql = 'UPDATE rate SET facility = ?, availability = ?, price_per_hour = ?, image = ? WHERE rateId = ?';
+    //insert the new product into the database
+    db.query( sql, [facility, availabilityValue, price, image, rateId], (error, results) => {
+        if (error) {
+            console.error('Error updating rate:', error.message);
+            res.status(500).send('Error updating rates');
+        } else {
+            //if no product with the given id is found, render a 404 page 
+            res.redirect('/');
+        }
+    });
+});
+
+//end of rate route
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
