@@ -349,6 +349,7 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
     });
 });
 
+
 //end of rate route
 
 // Start server
