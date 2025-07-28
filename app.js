@@ -596,6 +596,243 @@ app.post('/editPayment/:id', (req, res) => {
     });
 });
 //End of Payment Routes
+//booking
+// Route to render booking form
+app.get('/bookings', checkAuthenticated, (req, res) => {
+    
+    res.render('bookings', { formData: {}, messages: [], user: req.session.user    });
+});
+
+// Route to handle booking form submission
+app.post('/bookings', checkAuthenticated, (req, res) => {
+    const { username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost } = req.body;
+
+    // Enhanced validation
+    const errors = [];
+
+    if (!username || !email || !contact || !facilities || !booking_date || !start_time || !end_time || !num_people || !total_cost) {
+        errors.push('All fields are required');
+    }
+
+    if (!(email.includes('@') && email.includes('.') && email.indexOf('.') > email.indexOf('@') + 1)) {
+    errors.push('Invalid email format');
+    }
+
+    if (!(contact.length === 8 && !isNaN(contact))) {
+    errors.push('Contact number must be 8 digits');
+    }  
+
+    const bookingDate = new Date(booking_date);
+    const today = new Date();
+    if (bookingDate < today) {
+        errors.push('Booking date cannot be in the past');
+    }
+
+    // Check if there are any validation errors
+    if (errors.length > 0) {
+        return res.render('bookings', { 
+            formData: req.body, 
+            messages: errors 
+            , user: req.session.user
+        });
+    }
+
+    // Sanitize inputs before DB insertion
+    const sanitizedInputs = {
+        username: username.trim(),
+        email: email.toLowerCase().trim(),
+        contact: contact.trim(),
+        facilities: facilities.trim(),
+        booking_date,
+        start_time,
+        end_time,
+        num_people: parseInt(num_people),
+        total_cost: parseFloat(total_cost)
+    };
+
+    const sql = `INSERT INTO bookings 
+        (username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    connection.query(sql, Object.values(sanitizedInputs), (err, result) => {
+        if (err) {
+            console.error("Error inserting booking:", err);
+            return res.render('bookings', { 
+                formData: req.body, 
+                messages: ['Database error. Please try again.'] ,
+                user: req.session.user
+            });
+        }
+
+        req.flash('success', 'Booking successful!');
+        res.redirect('/listBooking');
+    });
+});
+
+app.get('/booking/:id', checkAuthenticated, (req, res) => {
+    const bookingId = req.params.id;
+
+    connection.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
+
+        if (results.length > 0) {
+            res.render('booking', { booking: results[0], user: req.session.user });
+        } else {
+            res.status(404).send('Booking not found');
+        }
+    });
+});
+
+app.get('/addBooking', checkAuthenticated, (req, res) => {
+    res.render('addBooking', { user: req.session.user });
+});
+
+// Handle booking creation
+app.post('/addBooking', (req, res) => {
+    const { username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost } = req.body;
+
+    const sql = `
+        INSERT INTO bookings 
+        (username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    connection.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost], (error) => {
+        if (error) {
+            console.error("Error adding booking:", error);
+            res.status(500).send('Error adding booking');
+        } else {
+            res.redirect('/listBooking');
+        }
+    });
+});
+
+
+app.get('/listBooking', checkAuthenticated, (req, res) => {
+    connection.query('SELECT * FROM bookings', (err, results) => {
+        if (err) {
+            req.flash('error', 'Error retrieving bookings');
+            return res.redirect('/');
+        }
+        res.render('listBooking', { bookings: results, user: req.session.user });
+    });
+});
+
+
+app.get('/editBooking/:id', checkAuthenticated, (req, res) => {
+    connection.query('SELECT * FROM bookings WHERE id = ?', [req.params.id], (err, result) => {
+        if (err || result.length === 0) {
+            req.flash('error', 'Booking not found');
+            return res.redirect('/listBooking');
+        }
+        res.render('editBooking', { booking: result[0], messages: [], user: req.session.user });
+    });
+});
+
+app.post('/editBooking/:id', checkAuthenticated, (req, res) => {
+    const { username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost } = req.body;
+    const sql = `UPDATE bookings 
+                SET username=?, email=?, contact=?, facilities=?, booking_date=?, start_time=?, end_time=?, num_people=?, total_cost=? 
+                WHERE id=?`;
+
+    const values = [username.trim(), email.toLowerCase().trim(), contact.trim(), facilities.trim(), booking_date, start_time, end_time, parseInt(num_people), parseFloat(total_cost), req.params.id];
+
+    connection.query(sql, values, (err) => {
+        if (err) {
+            req.flash('error', 'Update failed');
+            return res.redirect('/listBooking');
+        }
+        req.flash('success', 'Booking updated successfully');
+        res.redirect('/listBooking');
+    });
+});
+
+app.post('/cancelBooking/:id', checkAuthenticated, (req, res) => {
+    connection.query('DELETE FROM bookings WHERE id = ?', [req.params.id], (err) => {
+        if (err) {
+            req.flash('error', 'Failed to cancel booking');
+        } else {
+            req.flash('success', 'Booking cancelled');
+        }
+        res.redirect('/editBooking');
+    });
+});
+
+app.post('/searchBookings', checkAuthenticated, (req, res) => {
+    const { search_term } = req.body;
+    const sql = `
+        SELECT * FROM bookings 
+        WHERE username = ? AND (facilities LIKE ? OR booking_date = ?)
+    `;
+    const values = [req.session.user.username, `%${search_term}%`, search_term];
+
+    connection.query(sql, values, (err, results) => {
+        if (err) {
+            req.flash('error', 'Search failed');
+            return res.redirect('/editBooking');
+        }
+        res.render('editBookings', { bookings: results, messages: [], user: req.session.user });
+    });
+});
+
+app.get('/updateBooking/:id', checkAuthenticated, (req, res) => {
+    const bookingId = req.params.id;
+
+    connection.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
+        if (results.length > 0) {
+            res.render('updateBooking', { booking: results[0] });
+        } else {
+            res.status(404).send('Booking not found');
+        }
+    });
+});
+
+// Handle booking update
+app.post('/updateBooking/:id', (req, res) => {
+    const bookingId = req.params.id;
+    const { username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost } = req.body;
+
+    const sql = `
+        UPDATE bookings SET 
+        username = ?, email = ?, contact = ?, facilities = ?, 
+        booking_date = ?, start_time = ?, end_time = ?, num_people = ?, total_cost = ?
+        WHERE bookingId = ?
+    `;
+
+    connection.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost, bookingId], (error) => {
+        if (error) {
+            console.error("Error updating booking:", error);
+            res.status(500).send('Error updating booking');
+        } else {
+            res.redirect('/listBooking');
+        }
+    });
+});
+
+app.post('/cancelBooking/:id', checkAuthenticated, (req, res) => {
+    const bookingId = req.params.id;
+    const username = req.session.user.name;
+
+    // Ensure the user only cancels their own bookings
+    const sql = 'DELETE FROM bookings WHERE id = ? AND username = ?';
+    connection.query(sql, [bookingId, username], (err) => {
+        if (err) {
+            console.error(err);
+            req.flash('error', 'Could not cancel booking');
+        } else {
+            req.flash('success', 'Booking cancelled');
+        }
+        res.redirect('/bookings');
+    });
+});
+
+// Example homepage route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Booking System');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
+//end
 
 // Start server
 const PORT = process.env.PORT || 3000;
