@@ -413,6 +413,47 @@ app.get('/deleteFacility/:id', (req, res) => {
 });
 //End of facility routes
 
+app.get('/rate',(req,res) =>{
+    const sql='SELECT * FROM rate';
+    db.query(sql,(error,results) => {
+        if (error) {
+            console.error('Database query error:', error.message);
+            return res.status(500).send('Error Retrieving rate');
+        }
+    
+res.render('rate', {
+            rate: results,
+            query: '',
+            view: 'table',
+            noResults: results.length === 0
+        });
+
+    })
+})
+
+app.get('/rate/search', (req, res) => {
+  const searchQuery = req.query.query;
+  const viewMode = req.query.view || 'table';
+
+  const sql = 'SELECT * FROM rate WHERE facility LIKE ? OR availiability LIKE ?';
+  const likeQuery = `%${searchQuery}%`;
+
+  db.query(sql, [likeQuery, likeQuery], (error, results) => {
+    if (error) {
+      console.error('Search query error:', error.message);
+      return res.status(500).send('Error searching rates');
+    }
+
+    const noResults = results.length === 0;
+    res.render('rate', {
+      facility: results,
+      query: searchQuery,
+      view: viewMode,
+      noResults: noResults
+    });
+  });
+});
+
 app.get('/rate/:id', (req, res) => {
     //extract the product id from the request parameters
     const rateId = req.params.id;
@@ -448,7 +489,7 @@ app.get('/deleteRate/:id', (req, res) => {
             return res.status(500).send('Error deleting rate');
         } else {
             //if no product with the given id is found, render a 404 page 
-            res.redirect('/');
+            res.redirect('/rate');
         }
     });
 });
@@ -492,7 +533,7 @@ app.post('/addRate', upload.single('image'), (req, res) => {
             res.status(500).send('Error adding rates');
         } else {
             //if no rate with the given id is found, render a 404 page 
-            res.redirect('/');
+            res.redirect('/rate');
         }
     });
 });
@@ -515,7 +556,7 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
             res.status(500).send('Error updating rates');
         } else {
             //if no product with the given id is found, render a 404 page 
-            res.redirect('/');
+            res.redirect('/rate');
         }
     });
 });
@@ -528,7 +569,7 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
 app.get('/payments', checkAuthenticated, (req, res) => {
     const user_id = req.params.id
     const sql = 'SELECT * FROM payments WHERE user_id = ?'
-    connection.query(sql , [user_id], (error, results) => {
+    db.query(sql , [user_id], (error, results) => {
         // Edit later to check existence of user_id in database and perform filtering
         if (error) throw error;
 
@@ -544,7 +585,7 @@ app.get('/editPayment/:id',checkAuthenticated, checkAdmin, (req,res) => {
     const payment_id = req.params.id;
     const sql = 'SELECT payment_date, payment_mode, payment_status FROM payments WHERE payment_id = ?';
 
-    connection.query(sql , [payment_id], (error, results) => {
+    db.query(sql , [payment_id], (error, results) => {
         if (error) throw error;
 
         if (results.length > 0) {
@@ -560,7 +601,7 @@ app.post('/editPayment/:id', (req, res) => {
     const { payment_date, payment_mode, payment_status} = req.body;
 
     const sql = 'UPDATE payments SET payment_date = ?, payment_mode = ?, payment_status = ? WHERE payment_id = ?';
-    connection.query(sql, [payment_date, payment_mode, payment_status], (error, results) => {
+    db.query(sql, [payment_date, payment_mode, payment_status], (error, results) => {
         if (error) {
             console.error("Error updating payment:", error);
             res.status(500).send('Error updating payment');
