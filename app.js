@@ -89,9 +89,9 @@ app.get('/register', (req, res) => {
 
 // a middleware function validateRegistration //
 const validateRegistration = (req, res, next) => {
-    const { username, email, password, role, contact } = req.body;
+    const { username, email, password, contact } = req.body;
 
-    if (!username || !email || !password || !contact || !role) {
+    if (!username || !email || !password || !contact) {
         return res.status(400).send('All fields are required.');
     }
     
@@ -106,7 +106,7 @@ const validateRegistration = (req, res, next) => {
 
 //Integrating validateRegistration into the register route//
 app.post('/register', validateRegistration, (req, res) => {
-    const { username, email, password, contact, role} = req.body;
+    const { username, email, password, contact} = req.body;
 
     // Check if email or contact already exists
     const checkSql = 'SELECT * FROM users WHERE email = ? OR contact = ?';
@@ -132,8 +132,8 @@ app.post('/register', validateRegistration, (req, res) => {
         }
         
         // If no duplicates, proceed with registration
-        const insertSql = 'INSERT INTO users (username, email, password, contact, role) VALUES (?, ?, SHA1(?), ?, ?)';
-        db.query(insertSql, [username, email, password, contact, role], (err, result) => {
+        const insertSql = 'INSERT INTO users (username, email, password, contact) VALUES (?, ?, SHA1(?), ?)';
+        db.query(insertSql, [username, email, password, contact], (err, result) => {
             if (err) {
                 throw err;
             }
