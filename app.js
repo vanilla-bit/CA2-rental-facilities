@@ -435,7 +435,7 @@ app.get('/rate/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM rate WHERE facility LIKE ? OR availiability LIKE ?';
+  const sql = 'SELECT * FROM rate WHERE facility LIKE ?';
   const likeQuery = `%${searchQuery}%`;
 
   db.query(sql, [likeQuery, likeQuery], (error, results) => {
@@ -514,20 +514,12 @@ app.get('/editRate/:id', (req, res) => {
     });
 });
 
-app.post('/addRate', upload.single('image'), (req, res) => {
+app.post('/addRate', (req, res) => {
     //extract the rate data from the request body
-    const {facility, availability, price} = req.body;
-    let image;
-    if (req.file) {
-        image = req.file.filename;
-    } else {
-        image = "noimage.png";
-    }
-
-    let availabilityValue = availability === 'on' ? 1 : 0;
-    const sql = 'INSERT INTO rate (facility, availability, price_per_hour, image) VALUES (?, ?, ?, ?)';
+    const {facilityid, week, peak,  price} = req.body;
+    const sql = 'INSERT INTO rate (facilityid, week, peak, price) VALUES (?, ?, ?, ?)';
     //insert the new rate into the database
-    db.query( sql, [facility, availabilityValue, price, image], (error, results) => {
+    db.query( sql, [facilityid, week, peak, price], (error, results) => {
         if (error) {
             console.error('Error adding rate:', error.message);
             res.status(500).send('Error adding rates');
@@ -538,19 +530,13 @@ app.post('/addRate', upload.single('image'), (req, res) => {
     });
 });
 
-app.post('/editRate/:id', upload.single('image'), (req, res) => {
+app.post('/editRate/:id', (req, res) => {
     //extract the product data from the request body
     const rateId = req.params.id;
-    const {facility, availability, price} = req.body;
-    let image = req.body.currentImage; //retrieve current image filename
-    if (req.file) { // if new image is uploaded 
-        image = req.file.filename; //set image to be new image filename
-    }
-
-    let availabilityValue = availability === 'on' ? 1 : 0;
-    const sql = 'UPDATE rate SET facility = ?, availability = ?, price_per_hour = ?, image = ? WHERE rateId = ?';
+    const {facilityid, week, peak, price} = req.body;
+    const sql = 'UPDATE rate SET facilityid = ?, week = ?, peak = ?, price = ? WHERE rateId = ?';
     //insert the new product into the database
-    db.query( sql, [facility, availabilityValue, price, image, rateId], (error, results) => {
+    db.query( sql, [facilityid, week, peak, price, rateId], (error, results) => {
         if (error) {
             console.error('Error updating rate:', error.message);
             res.status(500).send('Error updating rates');
@@ -560,7 +546,6 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
         }
     });
 });
-
 
 //end of rate route
 

@@ -29,13 +29,20 @@
     <br>
     <div class="text-center"><h2>Rates from Rental Facility App Database</h2></div>
     <br>
+
+    <form action="/rate/search" method="get">
+    <input type="text" name="query" value="<%= query %>" placeholder="Search facility or availability">
+    <button type="submit" class="btn btn-outline-primary">Search</button>
+      <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
+    </form>
+    
     <table class="table table-hover small text-center">
       <thead>
           <tr>
             <th width="100">Facility</th>
-            <th width="100">Facility Image</th>
-            <th width="50">Availability</th>
-            <th width="50">Price/hr</th>
+            <th width="100">Day</th>
+            <th width="100">Peak</th>
+            <th width="100">Price</th>
             <th width="50">Edit</th>
             <th width="50">Delete</th>
           </tr>
@@ -43,10 +50,10 @@
       <tbody>
         <% for(let i=0; i < rate.length; i++) { %>
           <tr>
-            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].facility %></a></td>
-            <td><img src="images/<%= rate[i].image %>" width="20%"></td>
-            <td><%= rate[i].availability %></td>
-            <td>$<%= (rate.price_per_hour != null) ? rate.price_per_hour.toFixed(2) : '0.00' %></td>
+            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].facilityid %></a></td>
+            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].week %></a></td>
+            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].peak %></a></td>
+            <td>$<%= (rate[i].price != null) ? rate[i].price.toFixed(2) : '0.00' %></td>
             <!--edit & delete links-->
             <td><a href="/editRate/<%= rate[i].rateId %>">Edit</a></td>
             <td><a href="/deleteRate/<%= rate[i].rateId %>" onclick="return confirm('Are you sure you want to delete this rate?')">Delete</a></td>
@@ -55,5 +62,12 @@
       </tbody>
     </table>
   </div>
+
+<script>
+function clearSearch() {
+  document.querySelector('form').reset();
+  window.location.href = '/rate';  // Redirect to default rate list page without query or view params
+}
+</script>
 </body>
 </html>

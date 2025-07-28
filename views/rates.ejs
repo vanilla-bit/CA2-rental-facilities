@@ -30,10 +30,10 @@
         <br>
         <% if (rate) { %> <!-- Check if rate data exists -->
             <div>
-                <p><b>Facility:</b><br> <%= rate.facility %></p>
-                <p><b>facility Image:</b><br> <img src = "/images/<%= rate.image %>" width="20%"></p>
-                <p><b>availability:</b><br> <%= rate.availability %></p>
-                <p><b>Price/hr:</b><br> $<%= rate.price.toFixed(2) %></p> 
+                <p><b>Facility:</b><br> <%= rate.facilityid %></p>
+                <p><b>Day:</b><br> $<%= rate.week %></p>
+                <p><b>Peak:</b><br> $<%= rate.peak %></p>
+                <p><b>Price:</b><br> $<%= rate.price %></p>                
             </div>
         <% } else { %>
             <p>No Rate found.</p>

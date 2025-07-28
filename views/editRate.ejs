@@ -32,19 +32,20 @@
           <% if (rate) { %> 
             <form action="/editRate/<%= rate.rateId %>" method="POST" enctype="multipart/form-data">
                 <label for="facility">Facility:</label><br>
-                <input type="text" id="facility" name="facility" value = "<%= rate.facility %>" required><br><br>
+                <input type="text" id="facilityid" name="facilityid" value = "<%= rate.facilityid %>" required><br><br>
 
-                <label for="availability">Availability:</label><br>
-                <input type="checkbox" id="availability" name="availability" value="1" <%= rate.availability ? 'checked' : '' %> ><br><br>
+                <label for="day">Day:</label><br>
+                <input type="select" id="week" name="week" required><br><br>
+                <option value="Weekday">Weekday</option>
+                <option value="Weekend">Weekend</option>
 
-                <label for="price">Price/hr:</label><br>
-                <input type="number" id="price" name="price" min="0" step="0.01" value = <%= rate.price %> required><br><br>
+                <label for="peak">Peak:</label><br>
+                <input type="select" id="peak" name="peak" required><br><br>
+                <option value="peak">peak</option>
+                <option value="non_peak">non_peak</option>
 
-                <label for="image">Image:</label><br>
-                <input type="text" name="currentImage" value= <%= rate.image %> readonly><br>
-                <img src = "/images/<%= rate.image %>" width="20%"><br><br>
-
-                New Image: <br> <input type="file" id="image" name="image" accept="image/*" value= <%= rate.image %> ><br><br>
+                <label for="price">Price:</label><br>
+                <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>
 
                 <button type="submit">Update Rate</button>
             </form>

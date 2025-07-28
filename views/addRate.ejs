@@ -33,17 +33,18 @@
                 <label for="name">Facility:</label><br>
                 <input type="text" id="name" name="facility" required><br><br>
 
-                <label for="availability">Availability:</label><br>
-                <input type="checkbox" id="availability" name="availability" ><br><br>
+                <label for="day">Day:</label><br>
+                <input type="select" id="week" name="week" required><br><br>
+                <option value="Weekday">Weekday</option>
+                <option value="Weekend">Weekend</option>
 
-                <label for="price">Price/hr:</label><br>
-                <input type="number" id="price_per_hour" name="price_per_hour" min="0" step="0.01" required><br><br>
+                <label for="peak">Peak:</label><br>
+                <input type="select" id="peak" name="peak" required><br><br>
+                <option value="peak">peak</option>
+                <option value="non_peak">non_peak</option>
 
-                <!-- <label for="image">Image:</label><br>
-                <input type="text" id="image" name="image" required><br><br> -->
-
-                <label for="image">Image:</label><br>
-                <input type="file" id="image" name="image" accept="image/*" required><br><br>
+                <label for="price">Price:</label><br>
+                <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>
 
                 <button type="submit">Add Rate</button>
             </form>
