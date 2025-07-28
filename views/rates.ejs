@@ -31,8 +31,8 @@
         <% if (rate) { %> <!-- Check if rate data exists -->
             <div>
                 <p><b>Facility:</b><br> <%= rate.facilityid %></p>
-                <p><b>Day:</b><br> $<%= rate.week %></p>
-                <p><b>Peak:</b><br> $<%= rate.peak %></p>
+                <p><b>Day:</b><br> <%= rate.week %></p>
+                <p><b>Peak:</b><br> <%= rate.peak %></p>
                 <p><b>Price:</b><br> $<%= rate.price %></p>                
             </div>
         <% } else { %>

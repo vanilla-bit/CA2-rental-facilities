@@ -438,7 +438,7 @@ app.get('/rate/search', (req, res) => {
   const sql = 'SELECT * FROM rate WHERE facility LIKE ?';
   const likeQuery = `%${searchQuery}%`;
 
-  db.query(sql, [likeQuery, likeQuery], (error, results) => {
+  db.query(sql, [likeQuery], (error, results) => {
     if (error) {
       console.error('Search query error:', error.message);
       return res.status(500).send('Error searching rates');
@@ -446,7 +446,7 @@ app.get('/rate/search', (req, res) => {
 
     const noResults = results.length === 0;
     res.render('rate', {
-      facilityid: results,
+      rate: results,
       query: searchQuery,
       view: viewMode,
       noResults: noResults
@@ -467,7 +467,7 @@ app.get('/rate/:id', (req, res) => {
         //Check if any product with the given id was found
         if (results.length > 0) {
             //Render html page with the product data
-            res.render('rates', {rate: results[0]});
+            res.render('rate', {rate: results[0]});
         } else {
             //if no product with the given id is found, render a 404 page 
             res.status(404).send('Rate not found');
