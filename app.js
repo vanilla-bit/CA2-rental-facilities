@@ -833,7 +833,3 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
 //end
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
