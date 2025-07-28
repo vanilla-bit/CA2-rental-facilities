@@ -523,6 +523,54 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
 
 //end of rate route
 
+//Start of Payment Route
+// Routes created for features assigned to me
+app.get('/payments', checkAuthenticated, (req, res) => {
+    const user_id = req.params.id
+    const sql = 'SELECT * FROM payments WHERE user_id = ?'
+    connection.query(sql , [user_id], (error, results) => {
+        // Edit later to check existence of user_id in database and perform filtering
+        if (error) throw error;
+
+        if (results.length > 0) {
+            res.render('payments', { user: req.session.user, payments: results });
+        } else {
+            res.status(404).send('No payments found for user');
+        }
+    }); 
+});
+
+app.get('/editPayment/:id',checkAuthenticated, checkAdmin, (req,res) => {
+    const payment_id = req.params.id;
+    const sql = 'SELECT payment_date, payment_mode, payment_status FROM payments WHERE payment_id = ?';
+
+    connection.query(sql , [payment_id], (error, results) => {
+        if (error) throw error;
+
+        if (results.length > 0) {
+            res.render('editPayment', { payment: results[0] });
+        } else {
+            res.status(404).send('Payment not found');
+        }
+    });
+});
+
+app.post('/editPayment/:id', (req, res) => {
+    const payment_id = req.params.id;
+    const { payment_date, payment_mode, payment_status} = req.body;
+
+    const sql = 'UPDATE payments SET payment_date = ?, payment_mode = ?, payment_status = ? WHERE payment_id = ?';
+    connection.query(sql, [payment_date, payment_mode, payment_status], (error, results) => {
+        if (error) {
+            console.error("Error updating payment:", error);
+            res.status(500).send('Error updating payment');
+        } else {
+            res.redirect(' '); // Fill in with the route where admin should be redirected to
+        }
+    });
+});
+//End of Payment Routes
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
