@@ -435,7 +435,7 @@ app.get('/rate/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM rate WHERE facility LIKE ?';
+  const sql = 'SELECT * FROM rate WHERE facilityid LIKE ?';
   const likeQuery = `%${searchQuery}%`;
 
   db.query(sql, [likeQuery], (error, results) => {
