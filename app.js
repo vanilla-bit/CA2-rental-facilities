@@ -276,33 +276,49 @@ app.get('/facilities',(req,res) =>{
 // Add new route for booking from facility
 app.get('/book/:facilityId', checkAuthenticated, (req, res) => {
     const facilityId = req.params.facilityId;
-    const sql = 'SELECT * FROM facilities WHERE facilityId=?';  // Changed from facility to facilities
     
-    db.query(sql, [facilityId], (error, results) => {
+    // First get the selected facility
+    const facilityQuery = 'SELECT * FROM facilities WHERE facilityId = ?';
+    db.query(facilityQuery, [facilityId], (error, facilityResult) => {
         if (error) {
             console.error('Database query error:', error);
             return res.status(500).send('Error retrieving facility');
         }
-        if (results.length > 0) {
+        
+        // Then get all facilities for the dropdown
+        const allFacilitiesQuery = 'SELECT * FROM facilities';
+        db.query(allFacilitiesQuery, (error, allFacilities) => {
+            if (error) {
+                console.error('Database query error:', error);
+                return res.status(500).send('Error retrieving facilities');
+            }
+            
             res.render('bookings', {
                 user: req.session.user,
-                selectedFacility: results[0],
+                selectedFacility: facilityResult[0] || null,
+                facilities: allFacilities,
                 formData: {},
                 messages: []
             });
-        } else {
-            res.status(404).send('Facility not found');
-        }
+        });
     });
 });
 
 // Regular booking route without facility pre-selected
 app.get('/bookings', checkAuthenticated, (req, res) => {
-    res.render('bookings', {
-        user: req.session.user,
-        selectedFacility: null,
-        formData: {},
-        messages: []
+    const sql = 'SELECT * FROM facilities';
+    db.query(sql, (error, facilities) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).send('Error retrieving facilities');
+        }
+        res.render('bookings', {
+            user: req.session.user,
+            selectedFacility: null,
+            facilities: facilities,
+            formData: {},
+            messages: []
+        });
     });
 });
 
@@ -607,8 +623,20 @@ app.post('/editPayment/:id', (req, res) => {
 //End of Payment Routes
 //booking
 app.get('/bookings', checkAuthenticated, (req, res) => {
-    
-    res.render('bookings', { formData: {}, messages: [], user: req.session.user    });
+    const sql = 'SELECT * FROM facilities';
+    db.query(sql, (error, facilities) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).send('Error retrieving facilities');
+        }
+        res.render('bookings', {
+            user: req.session.user,
+            selectedFacility: null,
+            facilities: facilities,
+            formData: {},
+            messages: []
+        });
+    });
 });
 
 // Route to handle booking form submission
@@ -659,7 +687,7 @@ app.post('/bookings', checkAuthenticated, (req, res) => {
     };
 
     const sql = `INSERT INTO bookings 
-        (username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost)
+        (username, email, contact, facilityId, booking_date, timeslot_id, num_people, total_cost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     connection.query(sql, Object.values(sanitizedInputs), (err, result) => {
@@ -840,6 +868,62 @@ app.get('/mybookings', checkAuthenticated, (req, res) => {
         JOIN facilities ON bookings.facilityId = facilities.facilityId 
         WHERE bookings.user_id = ? 
         ORDER BY booking_date DESC`;
+
+    db.query(sql, [req.session.user.userId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).send('Error retrieving bookings');
+        }
+        res.render('mybookings', {
+            user: req.session.user,
+            bookings: results
+        });
+    });
+});
+
+app.post('/process-booking', checkAuthenticated, (req, res) => {
+    const {
+        facilities: facilityId,
+        booking_date,
+        start_time,
+        end_time,
+        num_people
+    } = req.body;
+
+    const booking = {
+        facilityId: facilityId,
+        booking_date: booking_date,
+        start_time: new Date(`${booking_date} ${start_time}`),
+        end_time: new Date(`${booking_date} ${end_time}`),
+        username: req.session.user.username,
+        email: req.session.user.email,
+        contact: req.session.user.contact,
+        user_id: req.session.user.userId,
+        payment_id: 'PENDING', // Default payment status
+        timeslot_id: 1 // You'll need to implement timeslot logic
+    };
+
+    const sql = 'INSERT INTO bookings SET ?';
+    db.query(sql, booking, (error, results) => {
+        if (error) {
+            console.error('Booking error:', error);
+            req.flash('error', 'Failed to create booking');
+            return res.redirect('/bookings');
+        }
+        
+        req.flash('success', 'Booking created successfully!');
+        res.redirect('/mybookings');
+    });
+});
+
+// Update the mybookings route to match new schema
+app.get('/mybookings', checkAuthenticated, (req, res) => {
+    const sql = `
+        SELECT b.*, f.name as facilityName 
+        FROM bookings b
+        JOIN facilities f ON b.facilityId = f.facilityId 
+        WHERE b.user_id = ? 
+        ORDER BY b.booking_date DESC, b.start_time ASC`;
 
     db.query(sql, [req.session.user.userId], (error, results) => {
         if (error) {

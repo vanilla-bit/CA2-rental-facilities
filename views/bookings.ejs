@@ -153,7 +153,7 @@
             </div>
         <% } %>
 
-        <form action="/bookings" method="POST" class="booking-form">
+        <form action="/process-booking" method="POST" class="booking-form">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -187,13 +187,14 @@
                         <label for="facilities"><i class="fas fa-building"></i> Facility</label>
                         <select class="form-control" id="facilities" name="facilities" required>
                             <option value="">Select a facility</option>
-                            <% const facilities = ['Basketball Court', 'Tennis Court', 'Swimming Pool', 'Gym']; %>
-                            <% facilities.forEach(facility => { %>
-                                <option value="<%= facility %>" 
-                                    <%= (selectedFacility && selectedFacility.name === facility) ? 'selected' : '' %>>
-                                    <%= facility %>
-                                </option>
-                            <% }); %>
+                            <% if (typeof facilities !== 'undefined' && facilities.length > 0) { %>
+                                <% facilities.forEach(facility => { %>
+                                    <option value="<%= facility.facilityId %>" 
+                                        <%= (selectedFacility && selectedFacility.facilityId === facility.facilityId) ? 'selected' : '' %>>
+                                        <%= facility.name %>
+                                    </option>
+                                <% }); %>
+                            <% } %>
                         </select>
                     </div>
                 </div>
