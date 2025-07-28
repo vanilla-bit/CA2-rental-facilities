@@ -29,19 +29,21 @@
         <div class="text-center"><h2>Add New Rate</h2></div>
         <br>
         <div class="text-center">
-            <form action="/addRate" method="POST" enctype="multipart/form-data">
+            <form action="/addRate" method="POST">
                 <label for="name">Facility:</label><br>
-                <input type="text" id="name" name="facility" required><br><br>
+                <input type="number" id="facilityid" name="facilityid" required><br><br>
 
                 <label for="day">Day:</label><br>
-                <input type="select" id="week" name="week" required><br><br>
+                <select id="week" name="week" required>
                   <option value="Weekday">Weekday</option>
                   <option value="Weekend">Weekend</option>
+                </select><br><br>
 
                 <label for="peak">Peak:</label><br>
-                <input type="select" id="peak" name="peak" required><br><br>
+                <select id="peak" name="peak" required>
                   <option value="peak">peak</option>
                   <option value="non_peak">non_peak</option>
+                </select><br><br>
 
                 <label for="price">Price:</label><br>
                 <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>

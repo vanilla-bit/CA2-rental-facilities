@@ -40,7 +40,7 @@ console.log('Connected to MySQL database');
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({
-    extended: false
+    extended: true
 }));
 
 // Session middleware
@@ -435,10 +435,10 @@ app.get('/rate/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM rate WHERE facilityid LIKE ?';
+  const sql = 'SELECT * FROM rate WHERE facilityid LIKE ? OR week LIKE ? OR peak = ?';
   const likeQuery = `%${searchQuery}%`;
 
-  db.query(sql, [likeQuery], (error, results) => {
+  db.query(sql, [likeQuery, likeQuery, searchQuery], (error, results) => {
     if (error) {
       console.error('Search query error:', error.message);
       return res.status(500).send('Error searching rates');

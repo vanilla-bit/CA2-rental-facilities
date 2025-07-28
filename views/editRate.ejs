@@ -30,19 +30,21 @@
         <br>
         <div class="text-center">
           <% if (rate) { %> 
-            <form action="/editRate/<%= rate.rateId %>" method="POST" enctype="multipart/form-data">
+            <form action="/editRate/<%= rate.rateId %>" method="POST">
                 <label for="facility">Facility:</label><br>
                 <input type="text" id="facilityid" name="facilityid" value = "<%= rate.facilityid %>" required><br><br>
 
                 <label for="day">Day:</label><br>
-                <input type="select" id="week" name="week" required><br><br>
+                <select id="week" name="week" required>
                   <option value="Weekday">Weekday</option>
                   <option value="Weekend">Weekend</option>
+                </select><br><br>
 
                 <label for="peak">Peak:</label><br>
-                <input type="select" id="peak" name="peak" required><br><br>
+                <select id="peak" name="peak" required>
                   <option value="peak">peak</option>
                   <option value="non_peak">non_peak</option>
+                </select><br><br>
 
                 <label for="price">Price:</label><br>
                 <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>
