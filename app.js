@@ -446,7 +446,7 @@ app.get('/rate/search', (req, res) => {
 
     const noResults = results.length === 0;
     res.render('rate', {
-      facility: results,
+      facilityid: results,
       query: searchQuery,
       view: viewMode,
       noResults: noResults
