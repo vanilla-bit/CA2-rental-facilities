@@ -435,7 +435,7 @@ app.get('/rate/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM rate WHERE facilityid LIKE ? OR week LIKE ? OR peak = ?';
+  const sql = 'SELECT * FROM rate WHERE facility_id LIKE ? OR week LIKE ? OR peak = ?';
   const likeQuery = `%${searchQuery}%`;
 
   db.query(sql, [likeQuery, likeQuery, searchQuery], (error, results) => {
@@ -516,10 +516,10 @@ app.get('/editRate/:id', (req, res) => {
 
 app.post('/addRate', (req, res) => {
     //extract the rate data from the request body
-    const {facilityid, week, peak,  price} = req.body;
-    const sql = 'INSERT INTO rate (facilityid, week, peak, price) VALUES (?, ?, ?, ?)';
+    const {facility_id, week, peak,  price} = req.body;
+    const sql = 'INSERT INTO rate (facility_id, week, peak, price) VALUES (?, ?, ?, ?)';
     //insert the new rate into the database
-    db.query( sql, [facilityid, week, peak, price], (error, results) => {
+    db.query( sql, [facility_id, week, peak, price], (error, results) => {
         if (error) {
             console.error('Error adding rate:', error.message);
             res.status(500).send('Error adding rates');
@@ -533,10 +533,10 @@ app.post('/addRate', (req, res) => {
 app.post('/editRate/:id', (req, res) => {
     //extract the product data from the request body
     const rateId = req.params.id;
-    const {facilityid, week, peak, price} = req.body;
-    const sql = 'UPDATE rate SET facilityid = ?, week = ?, peak = ?, price = ? WHERE rateId = ?';
+    const {facility_id, week, peak, price} = req.body;
+    const sql = 'UPDATE rate SET facility_id = ?, week = ?, peak = ?, price = ? WHERE rateId = ?';
     //insert the new product into the database
-    db.query( sql, [facilityid, week, peak, price, rateId], (error, results) => {
+    db.query( sql, [facility_id, week, peak, price, rateId], (error, results) => {
         if (error) {
             console.error('Error updating rate:', error.message);
             res.status(500).send('Error updating rates');

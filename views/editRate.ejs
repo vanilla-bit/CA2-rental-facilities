@@ -31,23 +31,23 @@
         <div class="text-center">
           <% if (rate) { %> 
             <form action="/editRate/<%= rate.rateId %>" method="POST">
-                <label for="facility">Facility:</label><br>
-                <input type="text" id="facilityid" name="facilityid" value = "<%= rate.facilityid %>" required><br><br>
+                <label for="facility">Facility ID:</label><br>
+                <input type="text" id="facility_id" name="facility_id" value = "<%= rate.facility_id %>" required><br><br>
 
                 <label for="day">Day:</label><br>
                 <select id="week" name="week" required>
-                  <option value="Weekday">Weekday</option>
-                  <option value="Weekend">Weekend</option>
+                  <option value="Weekday" <%= rate.week === 'Weekday' ? 'selected' : '' %>>Weekday</option>
+                  <option value="Weekend" <%= rate.week === 'Weekend' ? 'selected' : '' %>>Weekend</option>
                 </select><br><br>
 
                 <label for="peak">Peak:</label><br>
                 <select id="peak" name="peak" required>
-                  <option value="peak">peak</option>
-                  <option value="non_peak">non_peak</option>
+                  <option value="peak" <%= rate.peak === 'peak' ? 'selected' : '' %>>peak</option>
+                  <option value="non_peak" <%= rate.peak === 'non_peak' ? 'selected' : '' %>>non_peak</option>
                 </select><br><br>
 
                 <label for="price">Price:</label><br>
-                <input type="number" id="price" name="price" min="0" step="0.01" required><br><br>
+                <input type="number" id="price" name="price" value="<%= rate.price %>" min="0" step="0.01" required><br><br>
 
                 <button type="submit">Update Rate</button>
             </form>

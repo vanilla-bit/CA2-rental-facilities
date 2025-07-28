@@ -30,16 +30,18 @@
     <div class="text-center"><h2>Rates from Rental Facility App Database</h2></div>
     <br>
 
-    <form action="/rate/search" method="get">
-    <input type="text" name="query" value="<%= query %>" placeholder="Search facility or availability">
-    <button type="submit" class="btn btn-outline-primary">Search</button>
-      <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
-    </form>
+    <div class="text-center">  
+      <form action="/rate/search" method="get">
+      <input type="text" name="query" value="<%= query %>" placeholder="Search facilityID, peak and non_peak hrs">
+      <button type="submit" class="btn btn-outline-primary">Search</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
+      </form>
+    </div>
     
     <table class="table table-hover small text-center">
       <thead>
           <tr>
-            <th width="100">Facility</th>
+            <th width="100">Facility ID</th>
             <th width="100">Day</th>
             <th width="100">Peak</th>
             <th width="100">Price</th>
@@ -50,7 +52,7 @@
       <tbody>
         <% for(let i=0; i < rate.length; i++) { %>
           <tr>
-            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].facilityid %></a></td>
+            <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].facility_id %></a></td>
             <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].week %></a></td>
             <td><a href="/rates/<%= rate[i].rateId %>"><%= rate[i].peak %></a></td>
             <td>$<%= (rate[i].price != null) ? Number(rate[i].price).toFixed(2) : '0.00' %></td>
