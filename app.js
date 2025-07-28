@@ -256,7 +256,7 @@ app.get('/logout', (req, res) => {
 
 //Facilities routes
 app.get('/facility',(req,res) =>{
-    const sql='SELECT * FROM facility';
+    const sql='SELECT * FROM facilities';
     db.query(sql,(error,results) => {
         if (error) {
             console.error('Database query error:', error.message);
@@ -267,7 +267,8 @@ res.render('facilities', {
             facility: results,
             query: '',
             view: 'table',
-            noResults: results.length === 0
+            noResults: results.length === 0,
+            user: req.session.user
         });
 
     })
@@ -277,7 +278,7 @@ app.get('/facility/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM facility WHERE name LIKE ? OR description LIKE ?';
+  const sql = 'SELECT * FROM facilities WHERE name LIKE ? OR description LIKE ?';
   const likeQuery = `%${searchQuery}%`;
 
   db.query(sql, [likeQuery, likeQuery], (error, results) => {
@@ -291,7 +292,8 @@ app.get('/facility/search', (req, res) => {
       facility: results,
       query: searchQuery,
       view: viewMode,
-      noResults: noResults
+      noResults: noResults,
+      user: req.session.user
     });
   });
 });
@@ -299,7 +301,7 @@ app.get('/facility/search', (req, res) => {
 
 app.get('/facility/:id', (req,res) => {
     const facilityId=req.params.id;
-    const sql = 'SELECT * FROM facility WHERE facilityId=?';
+    const sql = 'SELECT * FROM facilities WHERE facilityId=?';
     db.query(sql,[facilityId],(error,results) => {
         if (error) {
             console.error('Database query error:', error.message);
@@ -324,7 +326,7 @@ app.post('/addFacility', upload.single('image'), (req, res) => {
         image=req.file.filename;
     } else {
         image="noImage.png";}
-    const sql='INSERT INTO facility (name, description, image) VALUES (?,?,?)';
+    const sql='INSERT INTO facilities (name, description, image) VALUES (?,?,?)';
     db.query(sql, [name,description,image], (error,results) => {
         if (error) {
             console.error("Error adding facility:", error);
@@ -337,7 +339,7 @@ app.post('/addFacility', upload.single('image'), (req, res) => {
 
 app.get('/editFacility/:id', (req,res) => {
     const facilityId=req.params.id;
-    const sql = 'SELECT * FROM facility WHERE facilityId=?';
+    const sql = 'SELECT * FROM facilities WHERE facilityId=?';
     db.query(sql,[facilityId],(error,results) => {
         if (error) {
             console.error('Database query error:', error.message);
@@ -368,7 +370,7 @@ app.post('/editFacility/:id', upload.single('image'), (req, res) => {
         });
     }
 
-    const sql='UPDATE facility SET name=?, description=?, image=? WHERE facilityId=?';
+    const sql='UPDATE facilities SET name=?, description=?, image=? WHERE facilityId=?';
     db.query(sql, [name,description,image,facilityId], (error,results) => {
         if (error) {
             console.error("Error updating facility:", error);
@@ -382,7 +384,7 @@ app.post('/editFacility/:id', upload.single('image'), (req, res) => {
 app.get('/deleteFacility/:id', (req, res) => {
     const facilityId = req.params.id;
 
-    const sqlSelect = 'SELECT image FROM facility WHERE facilityId = ?';
+    const sqlSelect = 'SELECT image FROM facilities WHERE facilityId = ?';
     db.query(sqlSelect, [facilityId], (err, results) => {
         if (err || results.length === 0) {
             console.error("Error fetching facility image:", err);
@@ -391,7 +393,7 @@ app.get('/deleteFacility/:id', (req, res) => {
 
         const imageName = results[0].image;
 
-        const sqlDelete = 'DELETE FROM facility WHERE facilityId = ?';
+        const sqlDelete = 'DELETE FROM facilities WHERE facilityId = ?';
         db.query(sqlDelete, [facilityId], (error) => {
             if (error) {
                 console.error("Error deleting facility:", error);
