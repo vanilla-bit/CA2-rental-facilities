@@ -38,6 +38,12 @@
             <p>No facility found.</p>
         <% } %>
         <a href ="/facility">Back</a>
+        <br><br>
+        <% if (user) { %>
+            <a href="/book/<%= facility.facilityId %>" class="btn btn-primary">Book Now</a>
+        <% } else { %>
+            <a href="/login" class="btn btn-secondary">Login to Book</a>
+        <% } %>
     </div>
     
 </body>

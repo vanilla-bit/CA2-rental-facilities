@@ -10,7 +10,7 @@
 <body>
     <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="/facility">Facility List App</a>
+        <a class="navbar-brand" href="/dashboard">Facility List App</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -66,10 +66,23 @@
 
           <% for(let i=0; i < facility.length; i++) { %>
             <tr>
-              <td><a href="/facility/<%=facility[i].facilityId%>" class="btn btn-outline-primary"><%= facility[i].name %></a></td>
-              <td><img src ="/facilityimages/<%=facility[i].image%>"  width="30%"></td>
+              <td>
+                <a href="#" class="facility-link" 
+                   data-facility-id="<%=facility[i].facilityId%>"
+                   data-bs-toggle="modal" 
+                   data-bs-target="#facilityModal">
+                    <%= facility[i].name %>
+                </a>
+              </td>
+              <td><img src="/facilityimages/<%=facility[i].image%>" width="30%"></td>
               <td><%= facility[i].description %></td>
-              <td><a href="" class="btn btn-outline-success">Book</a></td>
+              <td>
+                <% if (user) { %>
+                    <a href="/book/<%= facility[i].facilityId %>" class="btn btn-outline-success">Book</a>
+                <% } else { %>
+                    <a href="/login" class="btn btn-outline-secondary">Login to Book</a>
+                <% } %>
+              </td>
               <td><a href="/editFacility/<%=facility[i].facilityId%>" class="btn btn-outline-warning">Edit</a></td>
               <td><a href="/deleteFacility/<%=facility[i].facilityId%>" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this facility?')">Delete</a></td>
             </tr>
@@ -95,7 +108,7 @@
               <div class="card-body">
                 <h5 class="card-title"><a href="/facility/<%=facility[i].facilityId%>" class="btn btn-outline-primary"><%= facility[i].name %></a></h5>
                 <p class="card-body"><%= facility[i].description %></p>
-                <a href="" class="btn btn-outline-success">Book</a> <br><br>
+                <a href="/bookings" class="btn btn-outline-success">Book</a> <br><br>
                 <div class="d-flex gap-3">
                 <a href="/editFacility/<%=facility[i].facilityId%>" class="btn btn-outline-warning">Edit</a>
                 <a href="/deleteFacility/<%=facility[i].facilityId%>" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to delete this facility?')">Delete</a>
@@ -108,6 +121,35 @@
       </div>
     </div>
   </div>
+
+<!-- Add this modal markup at the end of your body tag -->
+<div class="modal fade" id="facilityModal" tabindex="-1" aria-labelledby="facilityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="facilityModalLabel">Facility Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <img id="modalFacilityImage" src="" alt="Facility Image" class="img-fluid mb-3">
+                    </div>
+                    <div class="col-md-6">
+                        <h3 id="modalFacilityName"></h3>
+                        <p id="modalFacilityDescription"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div id="modalBookingButton">
+                    <!-- Booking button will be inserted here -->
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
   let isTableView = true;
@@ -152,9 +194,41 @@ function clearSearch() {
   window.location.href = `/facility?view=${viewMode}`;
 }
 
-
-
-
+document.addEventListener('DOMContentLoaded', function() {
+    const facilityLinks = document.querySelectorAll('.facility-link');
+    
+    facilityLinks.forEach(link => {
+        link.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const facilityId = this.dataset.facilityId;
+            
+            try {
+                const response = await fetch(`/facility/${facilityId}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const facility = await response.json();
+                
+                // Update modal content
+                document.getElementById('modalFacilityName').textContent = facility.name;
+                document.getElementById('modalFacilityDescription').textContent = facility.description;
+                document.getElementById('modalFacilityImage').src = `/facilityimages/${facility.image}`;
+                
+                // Update booking button based on user authentication
+                const bookingButton = document.getElementById('modalBookingButton');
+                const isAuthenticated = "<%= user ? 'true' : 'false' %>";
+                
+                bookingButton.innerHTML = isAuthenticated 
+                    ? `<a href="/book/${facility.facilityId}" class="btn btn-primary">Book Now</a>`
+                    : `<a href="/login" class="btn btn-secondary">Login to Book</a>`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error loading facility details');
+            }
+        });
+    });
+});
 </script>
 
 </body>

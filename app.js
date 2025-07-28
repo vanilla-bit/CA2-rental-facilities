@@ -255,63 +255,57 @@ app.get('/logout', (req, res) => {
 //End of User
 
 //Facilities routes
-app.get('/facility',(req,res) =>{
-    const sql='SELECT * FROM facility';
+app.get('/facilities',(req,res) =>{
+    const sql='SELECT * FROM facilities';
     db.query(sql,(error,results) => {
         if (error) {
             console.error('Database query error:', error.message);
-            return res.status(500).send('Error Retrieving facility');
+            return res.status(500).send('Error Retrieving facilities');
         }
     
-res.render('facilities', {
+        res.render('facilities', {
             facility: results,
             query: '',
             view: 'table',
-            noResults: results.length === 0
+            noResults: results.length === 0,
+            user: req.session.user || null  // Add this line to pass user info
         });
-
-    })
-})
-
-app.get('/facility/search', (req, res) => {
-  const searchQuery = req.query.query;
-  const viewMode = req.query.view || 'table';
-
-  const sql = 'SELECT * FROM facility WHERE name LIKE ? OR description LIKE ?';
-  const likeQuery = `%${searchQuery}%`;
-
-  db.query(sql, [likeQuery, likeQuery], (error, results) => {
-    if (error) {
-      console.error('Search query error:', error.message);
-      return res.status(500).send('Error searching facilities');
-    }
-
-    const noResults = results.length === 0;
-    res.render('facilities', {
-      facility: results,
-      query: searchQuery,
-      view: viewMode,
-      noResults: noResults
     });
-  });
 });
 
-
-app.get('/facility/:id', (req,res) => {
-    const facilityId=req.params.id;
-    const sql = 'SELECT * FROM facility WHERE facilityId=?';
-    db.query(sql,[facilityId],(error,results) => {
+// Add new route for booking from facility
+app.get('/book/:facilityId', checkAuthenticated, (req, res) => {
+    const facilityId = req.params.facilityId;
+    const sql = 'SELECT * FROM facilities WHERE facilityId=?';  // Changed from facility to facilities
+    
+    db.query(sql, [facilityId], (error, results) => {
         if (error) {
-            console.error('Database query error:', error.message);
-            return res.status(500).send('Error Retrieving facility by ID');
+            console.error('Database query error:', error);
+            return res.status(500).send('Error retrieving facility');
         }
-        if (results.length>0){
-            res.render('facility', {facility: results[0]});
+        if (results.length > 0) {
+            res.render('bookings', {
+                user: req.session.user,
+                selectedFacility: results[0],
+                formData: {},
+                messages: []
+            });
         } else {
             res.status(404).send('Facility not found');
         }
-    })
-})
+    });
+});
+
+// Regular booking route without facility pre-selected
+app.get('/bookings', checkAuthenticated, (req, res) => {
+    res.render('bookings', {
+        user: req.session.user,
+        selectedFacility: null,
+        formData: {},
+        messages: []
+    });
+});
+
 
 app.get('/addFacility', (req,res) => {
     res.render('addFacility');
@@ -324,20 +318,20 @@ app.post('/addFacility', upload.single('image'), (req, res) => {
         image=req.file.filename;
     } else {
         image="noImage.png";}
-    const sql='INSERT INTO facility (name, description, image) VALUES (?,?,?)';
+    const sql='INSERT INTO facilities (name, description, image) VALUES (?,?,?)';  // Changed from facility to facilities
     db.query(sql, [name,description,image], (error,results) => {
         if (error) {
             console.error("Error adding facility:", error);
             res.status(500).send('Error adding facility');
         } else {
-            res.redirect('/facility');
+            res.redirect('/facilities');  // Changed redirect path
         }
     });
 });
 
 app.get('/editFacility/:id', (req,res) => {
     const facilityId=req.params.id;
-    const sql = 'SELECT * FROM facility WHERE facilityId=?';
+    const sql = 'SELECT * FROM facilities WHERE facilityId=?';  // Changed from facility to facilities
     db.query(sql,[facilityId],(error,results) => {
         if (error) {
             console.error('Database query error:', error.message);
@@ -368,13 +362,13 @@ app.post('/editFacility/:id', upload.single('image'), (req, res) => {
         });
     }
 
-    const sql='UPDATE facility SET name=?, description=?, image=? WHERE facilityId=?';
+    const sql='UPDATE facilities SET name=?, description=?, image=? WHERE facilityId=?';  // Changed from facility to facilities
     db.query(sql, [name,description,image,facilityId], (error,results) => {
         if (error) {
             console.error("Error updating facility:", error);
             res.status(500).send('Error updating facility');
         } else {
-            res.redirect('/facility');
+            res.redirect('/facilities');  // Changed redirect path
         }
     });
 });
@@ -382,7 +376,7 @@ app.post('/editFacility/:id', upload.single('image'), (req, res) => {
 app.get('/deleteFacility/:id', (req, res) => {
     const facilityId = req.params.id;
 
-    const sqlSelect = 'SELECT image FROM facility WHERE facilityId = ?';
+    const sqlSelect = 'SELECT image FROM facilities WHERE facilityId = ?';  // Changed from facility to facilities
     db.query(sqlSelect, [facilityId], (err, results) => {
         if (err || results.length === 0) {
             console.error("Error fetching facility image:", err);
@@ -391,7 +385,7 @@ app.get('/deleteFacility/:id', (req, res) => {
 
         const imageName = results[0].image;
 
-        const sqlDelete = 'DELETE FROM facility WHERE facilityId = ?';
+        const sqlDelete = 'DELETE FROM facilities WHERE facilityId = ?';  // Changed from facility to facilities
         db.query(sqlDelete, [facilityId], (error) => {
             if (error) {
                 console.error("Error deleting facility:", error);
@@ -407,7 +401,7 @@ app.get('/deleteFacility/:id', (req, res) => {
                 });
             }
 
-            res.redirect('/facility');
+            res.redirect('/facilities');  // Changed redirect path
         });
     });
 });
@@ -612,7 +606,6 @@ app.post('/editPayment/:id', (req, res) => {
 });
 //End of Payment Routes
 //booking
-// Route to render booking form
 app.get('/bookings', checkAuthenticated, (req, res) => {
     
     res.render('bookings', { formData: {}, messages: [], user: req.session.user    });
@@ -840,6 +833,26 @@ app.post('/cancelBooking/:id', checkAuthenticated, (req, res) => {
     });
 });
 
+app.get('/mybookings', checkAuthenticated, (req, res) => {
+    const sql = `
+        SELECT bookings.*, facilities.name as facilityName 
+        FROM bookings 
+        JOIN facilities ON bookings.facilityId = facilities.facilityId 
+        WHERE bookings.user_id = ? 
+        ORDER BY booking_date DESC`;
+
+    db.query(sql, [req.session.user.userId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error);
+            return res.status(500).send('Error retrieving bookings');
+        }
+        res.render('mybookings', {
+            user: req.session.user,
+            bookings: results
+        });
+    });
+});
+
 // Example homepage route
 app.get('/', (req, res) => {
     res.send('Welcome to the Booking System');
@@ -848,7 +861,3 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
 //end
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
