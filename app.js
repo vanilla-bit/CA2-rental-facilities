@@ -151,7 +151,7 @@ app.get('/login', (req, res) => {
     });
 });
 
-//login routes for form submission below//
+// login routes for form submission below //
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
 
