@@ -58,14 +58,7 @@
 
           <% for(let i=0; i < facility.length; i++) { %>
             <tr>
-              <td>
-                <a href="#" class="facility-link" 
-                   data-facility-id="<%=facility[i].facilityId%>"
-                   data-bs-toggle="modal" 
-                   data-bs-target="#facilityModal">
-                    <%= facility[i].name %>
-                </a>
-              </td>
+              <td><%= facility[i].name %></td>
               <td><img src="/facilityimages/<%=facility[i].image%>" width="30%"></td>
               <td><%= facility[i].description %></td>
               <td>
@@ -100,7 +93,7 @@
             <div class="card h-100">
               <img src ="/images/<%=facility[i].image%>" class="card-img-top">
               <div class="card-body">
-                <h5 class="card-title"><a href="/facility/<%=facility[i].facilityId%>" class="btn btn-outline-primary"><%= facility[i].name %></a></h5>
+                <h5 class="card-title"><%= facility[i].name %></h5>
                 <p class="card-body"><%= facility[i].description %></p>
                 <a href="/bookings" class="btn btn-outline-success">Book</a> <br><br>
                 <div class="d-flex gap-3">
