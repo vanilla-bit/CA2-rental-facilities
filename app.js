@@ -273,6 +273,30 @@ app.get('/facilities',(req,res) =>{
     });
 });
 
+app.get('/facility/search', (req, res) => {
+  const searchQuery = req.query.query;
+  const viewMode = req.query.view || 'table';
+
+  const sql = 'SELECT * FROM facilities WHERE name LIKE ? OR description LIKE ?';
+  const likeQuery = `%${searchQuery}%`; // Fixed: Use backticks for template literals
+
+  db.query(sql, [likeQuery, likeQuery], (error, results) => {
+    if (error) {
+      console.error('Search query error:', error.message);
+      return res.status(500).send('Error searching facilities');
+    }
+
+    const noResults = results.length === 0;
+    res.render('facilities', {
+      facility: results,
+      query: searchQuery,
+      view: viewMode,
+      noResults: noResults,
+      user: req.session.user || null
+    });
+  });
+});
+
 // Add new route for booking from facility
 app.get('/book/:facilityId', checkAuthenticated, (req, res) => {
     const facilityId = req.params.facilityId;
@@ -323,8 +347,11 @@ app.get('/bookings', checkAuthenticated, (req, res) => {
 });
 
 
-app.get('/addFacility', (req,res) => {
-    res.render('addFacility');
+app.get('/addFacility', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('addFacility', {
+        user: req.session.user,
+        messages: req.flash('success')
+    });
 });
 
 app.post('/addFacility', upload.single('image'), (req, res) => {
@@ -345,16 +372,22 @@ app.post('/addFacility', upload.single('image'), (req, res) => {
     });
 });
 
-app.get('/editFacility/:id', (req,res) => {
-    const facilityId=req.params.id;
-    const sql = 'SELECT * FROM facilities WHERE facilityId=?';  // Changed from facility to facilities
-    db.query(sql,[facilityId],(error,results) => {
+app.get('/editFacility/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const facilityId = req.params.id;
+    const sql = 'SELECT * FROM facilities WHERE facilityId = ?';
+
+    db.query(sql, [facilityId], (error, results) => {
         if (error) {
             console.error('Database query error:', error.message);
-            return res.status(500).send('Error Retrieving facility by ID');
+            return res.status(500).send('Error retrieving facility by ID');
         }
-        if (results.length>0){
-            res.render('editFacility', {facility: results[0]});
+
+        if (results.length > 0) {
+            res.render('editFacility', {
+                facility: results[0],
+                user: req.session.user,
+                messages: req.flash('success')
+            });
         } else {
             res.status(404).send('Facility not found');
         }

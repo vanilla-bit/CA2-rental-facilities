@@ -8,21 +8,7 @@
     <title>Facility List App</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="/facility">Facility List App</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="collapsibleNavbar">
-            <ul class="navbar-nav">
-              <li class="nav-item">
-                <a class="nav-link" href="/addFacility">Add new facility</a>
-              </li> 
-            </ul>
-          </div>
-        </div>
-    </nav>
+    <%- include('partials/navbar')%>
     
     <div class="container">
         <br>
@@ -37,7 +23,7 @@
         <% } else { %>
             <p>No facility found.</p>
         <% } %>
-        <a href ="/facility">Back</a>
+        <a href ="/facilities">Back</a>
         <br><br>
         <% if (user) { %>
             <a href="/book/<%= facility.facilityId %>" class="btn btn-primary">Book Now</a>
