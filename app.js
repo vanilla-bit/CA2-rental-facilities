@@ -592,26 +592,21 @@ app.post('/editRate/:id', (req, res) => {
 
 //end of rate route
 
-//Start of Payment Route
-// Routes created for features assigned to me
+//Start of Payment Routes
 app.get('/payments', checkAuthenticated, (req, res) => {
-    const user_id = req.params.id
-    const sql = 'SELECT * FROM payments WHERE user_id = ?'
+    const user_id = req.session.user.id
+    const sql = 'SELECT payments.* FROM payments INNER JOIN bookings ON payments.booking_id = bookings.booking_id WHERE bookings.user_id = ?'
     db.query(sql , [user_id], (error, results) => {
-        // Edit later to check existence of user_id in database and perform filtering
         if (error) throw error;
 
-        if (results.length > 0) {
-            res.render('payments', { user: req.session.user, payments: results });
-        } else {
-            res.status(404).send('No payments found for user');
-        }
-    }); 
+        res.render('payments', { user: req.session.user, payments: results });
+    });
 });
+
 
 app.get('/editPayment/:id',checkAuthenticated, checkAdmin, (req,res) => {
     const payment_id = req.params.id;
-    const sql = 'SELECT payment_date, payment_mode, payment_status FROM payments WHERE payment_id = ?';
+    const sql = 'SELECT payment_id, payment_month, payment_amount, payment_date, payment_mode, payment_status FROM payments WHERE payment_id = ?';
 
     db.query(sql , [payment_id], (error, results) => {
         if (error) throw error;
@@ -624,17 +619,17 @@ app.get('/editPayment/:id',checkAuthenticated, checkAdmin, (req,res) => {
     });
 });
 
-app.post('/editPayment/:id', (req, res) => {
+app.post('/editPayment/:id', checkAuthenticated, checkAdmin, (req, res) => {
     const payment_id = req.params.id;
     const { payment_date, payment_mode, payment_status} = req.body;
 
     const sql = 'UPDATE payments SET payment_date = ?, payment_mode = ?, payment_status = ? WHERE payment_id = ?';
-    db.query(sql, [payment_date, payment_mode, payment_status], (error, results) => {
+    db.query(sql, [payment_date, payment_mode, payment_status, payment_id], (error, results) => {
         if (error) {
             console.error("Error updating payment:", error);
             res.status(500).send('Error updating payment');
         } else {
-            res.redirect(' '); // Fill in with the route where admin should be redirected to
+            res.redirect('/dashboard');
         }
     });
 });
