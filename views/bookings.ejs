@@ -154,6 +154,8 @@
         <% } %>
 
         <form action="/process-booking" method="POST" class="booking-form">
+            <input type="hidden" name="user_id" value="<%= user ? user.id : '' %>">
+            <input type="hidden" name="rate_id" id="rate_id">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -239,13 +241,63 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-submit">
-                <i class="fas fa-check-circle"></i> Confirm Booking
-            </button>
+            <div class="text-center mt-4">
+                <a href="/mybookings" class="btn btn-primary">
+                Confirm Booking
+                </a>
+            </div>
         </form>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const facilitySelect = document.getElementById('facilities');
+    const dateInput = document.getElementById('booking_date');
+    const startTimeInput = document.getElementById('start_time');
+    const endTimeInput = document.getElementById('end_time');
+    const totalCostInput = document.getElementById('total_cost');
+    const rateIdInput = document.getElementById('rate_id');
+
+    async function calculateCost() {
+        const facilityId = facilitySelect.value;
+        const date = dateInput.value;
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+
+        if (!facilityId || !date || !startTime || !endTime) return;
+
+        try {
+            const response = await fetch('/api/calculate-rate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    facilityId,
+                    date,
+                    startTime,
+                    endTime
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                totalCostInput.value = data.totalCost;
+                rateIdInput.value = data.rateId;
+            }
+        } catch (error) {
+            console.error('Error calculating rate:', error);
+        }
+    }
+
+    // Add event listeners for form fields
+    facilitySelect.addEventListener('change', calculateCost);
+    dateInput.addEventListener('change', calculateCost);
+    startTimeInput.addEventListener('change', calculateCost);
+    endTimeInput.addEventListener('change', calculateCost);
+});
+</script>
 </body>
 </html>
 

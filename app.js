@@ -445,10 +445,10 @@ app.get('/rate/search', (req, res) => {
   const searchQuery = req.query.query;
   const viewMode = req.query.view || 'table';
 
-  const sql = 'SELECT * FROM rate WHERE facility LIKE ? OR availiability LIKE ?';
+  const sql = 'SELECT * FROM rate WHERE facility_id LIKE ? OR week LIKE ? OR peak = ?';
   const likeQuery = `%${searchQuery}%`;
 
-  db.query(sql, [likeQuery, likeQuery], (error, results) => {
+  db.query(sql, [likeQuery, likeQuery, searchQuery], (error, results) => {
     if (error) {
       console.error('Search query error:', error.message);
       return res.status(500).send('Error searching rates');
@@ -456,7 +456,7 @@ app.get('/rate/search', (req, res) => {
 
     const noResults = results.length === 0;
     res.render('rate', {
-      facility: results,
+      rate: results,
       query: searchQuery,
       view: viewMode,
       noResults: noResults
@@ -477,7 +477,7 @@ app.get('/rate/:id', (req, res) => {
         //Check if any product with the given id was found
         if (results.length > 0) {
             //Render html page with the product data
-            res.render('rates', {rate: results[0]});
+            res.render('rate', {rate: results[0]});
         } else {
             //if no product with the given id is found, render a 404 page 
             res.status(404).send('Rate not found');
@@ -524,20 +524,12 @@ app.get('/editRate/:id', (req, res) => {
     });
 });
 
-app.post('/addRate', upload.single('image'), (req, res) => {
+app.post('/addRate', (req, res) => {
     //extract the rate data from the request body
-    const {facility, availability, price} = req.body;
-    let image;
-    if (req.file) {
-        image = req.file.filename;
-    } else {
-        image = "noimage.png";
-    }
-
-    let availabilityValue = availability === 'on' ? 1 : 0;
-    const sql = 'INSERT INTO rate (facility, availability, price_per_hour, image) VALUES (?, ?, ?, ?)';
+    const {facility_id, week, peak,  price} = req.body;
+    const sql = 'INSERT INTO rate (facility_id, week, peak, price) VALUES (?, ?, ?, ?)';
     //insert the new rate into the database
-    db.query( sql, [facility, availabilityValue, price, image], (error, results) => {
+    db.query( sql, [facility_id, week, peak, price], (error, results) => {
         if (error) {
             console.error('Error adding rate:', error.message);
             res.status(500).send('Error adding rates');
@@ -548,19 +540,13 @@ app.post('/addRate', upload.single('image'), (req, res) => {
     });
 });
 
-app.post('/editRate/:id', upload.single('image'), (req, res) => {
+app.post('/editRate/:id', (req, res) => {
     //extract the product data from the request body
     const rateId = req.params.id;
-    const {facility, availability, price} = req.body;
-    let image = req.body.currentImage; //retrieve current image filename
-    if (req.file) { // if new image is uploaded 
-        image = req.file.filename; //set image to be new image filename
-    }
-
-    let availabilityValue = availability === 'on' ? 1 : 0;
-    const sql = 'UPDATE rate SET facility = ?, availability = ?, price_per_hour = ?, image = ? WHERE rateId = ?';
+    const {facility_id, week, peak, price} = req.body;
+    const sql = 'UPDATE rate SET facility_id = ?, week = ?, peak = ?, price = ? WHERE rateId = ?';
     //insert the new product into the database
-    db.query( sql, [facility, availabilityValue, price, image, rateId], (error, results) => {
+    db.query( sql, [facility_id, week, peak, price, rateId], (error, results) => {
         if (error) {
             console.error('Error updating rate:', error.message);
             res.status(500).send('Error updating rates');
@@ -570,7 +556,6 @@ app.post('/editRate/:id', upload.single('image'), (req, res) => {
         }
     });
 });
-
 
 //end of rate route
 
@@ -690,7 +675,7 @@ app.post('/bookings', checkAuthenticated, (req, res) => {
         (username, email, contact, facilityId, booking_date, timeslot_id, num_people, total_cost)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    connection.query(sql, Object.values(sanitizedInputs), (err, result) => {
+    db.query(sql, Object.values(sanitizedInputs), (err, result) => {
         if (err) {
             console.error("Error inserting booking:", err);
             return res.render('bookings', { 
@@ -707,8 +692,7 @@ app.post('/bookings', checkAuthenticated, (req, res) => {
 
 app.get('/booking/:id', checkAuthenticated, (req, res) => {
     const bookingId = req.params.id;
-
-    connection.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
+    db.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
 
         if (results.length > 0) {
             res.render('booking', { booking: results[0], user: req.session.user });
@@ -732,7 +716,7 @@ app.post('/addBooking', (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    connection.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost], (error) => {
+    db.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost], (error) => {
         if (error) {
             console.error("Error adding booking:", error);
             res.status(500).send('Error adding booking');
@@ -744,7 +728,7 @@ app.post('/addBooking', (req, res) => {
 
 
 app.get('/listBooking', checkAuthenticated, (req, res) => {
-    connection.query('SELECT * FROM bookings', (err, results) => {
+    db.query('SELECT * FROM bookings', (err, results) => {
         if (err) {
             req.flash('error', 'Error retrieving bookings');
             return res.redirect('/');
@@ -755,7 +739,7 @@ app.get('/listBooking', checkAuthenticated, (req, res) => {
 
 
 app.get('/editBooking/:id', checkAuthenticated, (req, res) => {
-    connection.query('SELECT * FROM bookings WHERE id = ?', [req.params.id], (err, result) => {
+    db.query('SELECT * FROM bookings WHERE id = ?', [req.params.id], (err, result) => {
         if (err || result.length === 0) {
             req.flash('error', 'Booking not found');
             return res.redirect('/listBooking');
@@ -772,7 +756,7 @@ app.post('/editBooking/:id', checkAuthenticated, (req, res) => {
 
     const values = [username.trim(), email.toLowerCase().trim(), contact.trim(), facilities.trim(), booking_date, start_time, end_time, parseInt(num_people), parseFloat(total_cost), req.params.id];
 
-    connection.query(sql, values, (err) => {
+    db.query(sql, values, (err) => {
         if (err) {
             req.flash('error', 'Update failed');
             return res.redirect('/listBooking');
@@ -783,7 +767,7 @@ app.post('/editBooking/:id', checkAuthenticated, (req, res) => {
 });
 
 app.post('/cancelBooking/:id', checkAuthenticated, (req, res) => {
-    connection.query('DELETE FROM bookings WHERE id = ?', [req.params.id], (err) => {
+    db.query('DELETE FROM bookings WHERE id = ?', [req.params.id], (err) => {
         if (err) {
             req.flash('error', 'Failed to cancel booking');
         } else {
@@ -801,7 +785,7 @@ app.post('/searchBookings', checkAuthenticated, (req, res) => {
     `;
     const values = [req.session.user.username, `%${search_term}%`, search_term];
 
-    connection.query(sql, values, (err, results) => {
+    db.query(sql, values, (err, results) => {
         if (err) {
             req.flash('error', 'Search failed');
             return res.redirect('/editBooking');
@@ -813,7 +797,7 @@ app.post('/searchBookings', checkAuthenticated, (req, res) => {
 app.get('/updateBooking/:id', checkAuthenticated, (req, res) => {
     const bookingId = req.params.id;
 
-    connection.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
+    db.query('SELECT * FROM bookings WHERE bookingId = ?', [bookingId], (error, results) => {
         if (results.length > 0) {
             res.render('updateBooking', { booking: results[0] });
         } else {
@@ -834,7 +818,7 @@ app.post('/updateBooking/:id', (req, res) => {
         WHERE bookingId = ?
     `;
 
-    connection.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost, bookingId], (error) => {
+    db.query(sql, [username, email, contact, facilities, booking_date, start_time, end_time, num_people, total_cost, bookingId], (error) => {
         if (error) {
             console.error("Error updating booking:", error);
             res.status(500).send('Error updating booking');
@@ -850,7 +834,7 @@ app.post('/cancelBooking/:id', checkAuthenticated, (req, res) => {
 
     // Ensure the user only cancels their own bookings
     const sql = 'DELETE FROM bookings WHERE id = ? AND username = ?';
-    connection.query(sql, [bookingId, username], (err) => {
+    db.query(sql, [bookingId, username], (err) => {
         if (err) {
             console.error(err);
             req.flash('error', 'Could not cancel booking');
@@ -881,39 +865,60 @@ app.get('/mybookings', checkAuthenticated, (req, res) => {
     });
 });
 
-app.post('/process-booking', checkAuthenticated, (req, res) => {
-    const {
-        facilities: facilityId,
-        booking_date,
-        start_time,
-        end_time,
-        num_people
-    } = req.body;
+app.post('/process-booking', checkAuthenticated, async (req, res) => {
+    try {
+        const {
+            facilities: facilityId,
+            booking_date,
+            start_time,
+            end_time,
+            num_people,
+            total_cost,
+            rate_id
+        } = req.body;
 
-    const booking = {
-        facilityId: facilityId,
-        booking_date: booking_date,
-        start_time: new Date(`${booking_date} ${start_time}`),
-        end_time: new Date(`${booking_date} ${end_time}`),
-        username: req.session.user.username,
-        email: req.session.user.email,
-        contact: req.session.user.contact,
-        user_id: req.session.user.userId,
-        payment_id: 'PENDING', // Default payment status
-        timeslot_id: 1 // You'll need to implement timeslot logic
-    };
-
-    const sql = 'INSERT INTO bookings SET ?';
-    db.query(sql, booking, (error, results) => {
-        if (error) {
-            console.error('Booking error:', error);
-            req.flash('error', 'Failed to create booking');
+        // Validate required fields
+        if (!facilityId || !booking_date || !start_time || !end_time || !num_people || !total_cost || !rate_id) {
+            req.flash('error', 'All fields are required');
             return res.redirect('/bookings');
         }
-        
-        req.flash('success', 'Booking created successfully!');
-        res.redirect('/mybookings');
-    });
+
+        // Create timeslot first
+        const [timeslotResult] = await db.promise().query(
+            'INSERT INTO timeslots (start_time, end_time) VALUES (?, ?)',
+            [start_time, end_time]
+        );
+
+        const booking = {
+            facilityId: parseInt(facilityId),
+            booking_date,
+            timeslot_id: timeslotResult.insertId,
+            username: req.session.user.username,
+            email: req.session.user.email,
+            contact: req.session.user.contact,
+            user_id: req.session.user.userId,
+            rate_id: parseInt(rate_id),
+            num_people: parseInt(num_people)
+        };
+
+        // Insert the booking
+        const [bookingResult] = await db.promise().query(
+            'INSERT INTO bookings SET ?',
+            booking
+        );
+
+        if (bookingResult.insertId) {
+            req.flash('success', 'Booking created successfully!');
+            res.redirect('/mybookings');
+        } else {
+            throw new Error('Failed to create booking');
+        }
+
+    } catch (error) {
+        console.error('Booking error:', error);
+        req.flash('error', error.message || 'Failed to create booking');
+        res.redirect('/bookings');
+    }
 });
 
 // Update the mybookings route to match new schema
@@ -944,4 +949,47 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on URL address: http://localhost:${PORT}/`));
-//end
+
+// Add to your routes file
+app.post('/api/calculate-rate', async (req, res) => {
+    const { facilityId, date, startTime, endTime } = req.body;
+    
+    try {
+        const bookingDate = new Date(date);
+        const isWeekend = bookingDate.getDay() === 0 || bookingDate.getDay() === 6;
+        const week = isWeekend ? 'weekend' : 'weekday';
+        
+        const startHour = parseInt(startTime.split(':')[0]);
+        const isPeak = startHour >= 18 && startHour < 22;
+        const peakStatus = isPeak ? 'peak' : 'non-peak';
+        
+        // Use promise-based query
+        const [rows] = await db.promise().query(
+            'SELECT rateId, price FROM rate WHERE facility_id = ? AND week = ? AND peak = ?',
+            [facilityId, week, peakStatus]
+        );
+
+        if (!rows || rows.length === 0) {
+            throw new Error('No rate found for the selected criteria');
+        }
+
+        const rate = rows[0];
+        const start = new Date(`${date}T${startTime}`);
+        const end = new Date(`${date}T${endTime}`);
+        const durationHours = (end - start) / (1000 * 60 * 60);
+        
+        const totalCost = rate.price * durationHours;
+        
+        res.json({
+            success: true,
+            totalCost: totalCost.toFixed(2),
+            rateId: rate.rateId
+        });
+    } catch (error) {
+        console.error('Rate calculation error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
